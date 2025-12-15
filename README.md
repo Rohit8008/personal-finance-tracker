@@ -135,13 +135,3 @@ Feel free to fork the repo and submit pull requests.
 📄 License
 
 MIT License
-
-⸻
-
-If you want, I can also generate:
-
-✅ A professional project description for your resume
-✅ A polished LinkedIn post to announce the project
-✅ A GitHub project banner image (text-based)
-
-Just let me know!
