@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Categories | Finance Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">💰 Finance Tracker</a>
+            <ul class="nav-links">
+                <li><a href="index.html">Dashboard</a></li>
+                <li><a href="transactions.html">Transactions</a></li>
+                <li><a href="expenses.html">Expenses</a></li>
+                <li><a href="incomes.html">Incomes</a></li>
+                <li><a href="categories.html" class="active">Categories</a></li>
+                <li><a href="summary.html">Analytics</a></li>
+                <li><span id="userDisplay">User</span></li>
+                <li><button class="btn-logout" onclick="logout()">Logout</button></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div id="errorMessage" class="alert alert-error"></div>
+        <div id="successMessage" class="alert alert-success"></div>
+
+        <div class="card">
+            <div class="card-header">
+                <h1 class="card-title">Categories</h1>
+                <button class="btn btn-primary" onclick="openAddCategoryModal()">+ Add Category</button>
+            </div>
+
+            <!-- Categories Grid -->
+            <div id="categoriesGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem;">
+                <div class="loading">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Category Modal -->
+    <div id="addCategoryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Category</h2>
+                <button class="modal-close" onclick="closeAddCategoryModal()">&times;</button>
+            </div>
+            <form id="categoryForm" onsubmit="handleAddCategory(event)">
+                <div class="form-group">
+                    <label class="form-label">Name</label>
+                    <input type="text" id="categoryName" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Type</label>
+                    <select id="categoryType" class="form-select" required>
+                        <option value="INCOME">Income</option>
+                        <option value="EXPENSE">Expense</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Monthly Budget (Optional)</label>
+                    <input type="number" id="categoryMonthlyBudget" class="form-input" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Yearly Budget (Optional)</label>
+                    <input type="number" id="categoryYearlyBudget" class="form-input" step="0.01" min="0">
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Add Category</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeAddCategoryModal()" style="flex: 1;">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        async function loadCategories() {
+            if (!isAuthenticated()) {
+                redirectToLogin();
+                return;
+            }
+
+            try {
+                const categories = await api.getCategories();
+                displayCategories(categories);
+            } catch (error) {
+                console.error('Error loading categories:', error);
+                showError('Failed to load categories');
+                document.getElementById('categoriesGrid').innerHTML = 
+                    '<div class="empty-state">Failed to load categories</div>';
+            }
+        }
+
+        function displayCategories(categories) {
+            const grid = document.getElementById('categoriesGrid');
+            
+            if (categories.length === 0) {
+                grid.innerHTML = '<div class="empty-state">No categories found. Add your first category!</div>';
+                return;
+            }
+
+            grid.innerHTML = categories.map(category => {
+                const typeBadge = category.type === 'INCOME' 
+                    ? '<span class="badge badge-success">Income</span>'
+                    : '<span class="badge badge-danger">Expense</span>';
+                
+                return `
+                    <div class="card" style="margin: 0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3 style="margin: 0;">${category.name}</h3>
+                            ${typeBadge}
+                        </div>
+                        ${category.monthlyBudget ? `<div style="font-size: 0.875rem; color: #64748b;">Monthly Budget: ${formatCurrency(category.monthlyBudget)}</div>` : ''}
+                        ${category.yearlyBudget ? `<div style="font-size: 0.875rem; color: #64748b;">Yearly Budget: ${formatCurrency(category.yearlyBudget)}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openAddCategoryModal() {
+            document.getElementById('addCategoryModal').classList.add('active');
+        }
+
+        function closeAddCategoryModal() {
+            document.getElementById('addCategoryModal').classList.remove('active');
+            document.getElementById('categoryForm').reset();
+        }
+
+        async function handleAddCategory(event) {
+            event.preventDefault();
+            
+            const category = {
+                name: document.getElementById('categoryName').value,
+                type: document.getElementById('categoryType').value,
+                monthlyBudget: document.getElementById('categoryMonthlyBudget').value 
+                    ? parseFloat(document.getElementById('categoryMonthlyBudget').value) 
+                    : null,
+                yearlyBudget: document.getElementById('categoryYearlyBudget').value 
+                    ? parseFloat(document.getElementById('categoryYearlyBudget').value) 
+                    : null
+            };
+
+            try {
+                await api.addCategory(category);
+                showSuccess('Category added successfully');
+                closeAddCategoryModal();
+                loadCategories();
+            } catch (error) {
+                console.error('Error adding category:', error);
+                showError('Failed to add category');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCategories();
+        });
+    </script>
+</body>
+</html>
