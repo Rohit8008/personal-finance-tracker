@@ -60,10 +60,10 @@ public class AuthService {
         if (otpService.isOtpEnabled()) {
             // Generate and send OTP
             otpService.generateAndSendOtp(request.getUsername());
-            return false; // OTP required
+            return true; // OTP required
         } else {
             // OTP disabled, return token directly
-            return true; // No OTP required
+            return false; // No OTP required
         }
     }
 

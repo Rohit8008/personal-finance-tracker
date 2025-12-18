@@ -33,15 +33,15 @@ public class AuthController {
 
         Map<String, Object> body = new HashMap<>();
 
-        if (!otpRequired) {
+        if (otpRequired) {
+            // OTP is enabled, OTP has been sent to email
+            body.put("otpRequired", true);
+            body.put("message", "OTP has been sent to your email");
+        } else {
             // OTP is disabled, return token directly
             String token = authService.generateTokenWithoutOtp(request.getUsername());
             body.put("token", token);
             body.put("otpRequired", false);
-        } else {
-            // OTP is enabled, OTP has been sent to email
-            body.put("otpRequired", true);
-            body.put("message", "OTP has been sent to your email");
         }
 
         return ResponseEntity.ok(body);
